@@ -1,5 +1,5 @@
 -- // =========================================
--- // King Rua Hub UI Library – vFinal
+-- // King Rua Hub UI Library – vFinal Corrigida
 -- // =========================================
 local Library = {}
 
@@ -450,7 +450,7 @@ function Library:NewWindow(ConfigWindow)
 			TabName = TabConfig
 			TabIcon = nil
 		else
-			TabConfig = self:MakeConfig({Name = "Tab", Icon = ""}, TabConfig)
+			TabConfig = Library:MakeConfig({Name = "Tab", Icon = ""}, TabConfig)  -- CORRIGIDO: Library:MakeConfig
 			TabName = TabConfig.Name
 			TabIcon = TabConfig.Icon
 		end
@@ -546,7 +546,7 @@ function Library:NewWindow(ConfigWindow)
 			return s
 		end
 
-		-- ===== Elementos =====
+		-- ===== Elementos (todos corrigidos para usar Library:MakeConfig) =====
 		function TabMethods:AddToggle(Config)
 			Config = Library:MakeConfig({
 				Title = "Toggle", Description = "", Default = false,
