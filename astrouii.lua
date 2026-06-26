@@ -1,5 +1,5 @@
 -- // =========================================
--- // King Rua Hub UI Library – vFinal Corrigida
+-- // King Rua Hub UI Library – Versão Final
 -- // =========================================
 local Library = {}
 
@@ -93,26 +93,45 @@ function Library:LoadSettings()
 	end
 end
 
--- Notificações
+-- Notificações (sistema empilhável)
+Library.NotifyGui = nil
+Library.NotifyLayout = nil
+
 function Library:Notification(Title, Text, Duration)
 	Duration = Duration or 5
-	local NotifyGui = Instance.new("ScreenGui")
-	NotifyGui.Name = "NotificationGui"
-	NotifyGui.Parent = CoreGui
-	NotifyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+	if not Library.NotifyGui then
+		Library.NotifyGui = Instance.new("ScreenGui")
+		Library.NotifyGui.Name = "NotificationGui"
+		Library.NotifyGui.Parent = CoreGui
+		Library.NotifyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+		Library.NotifyLayout = Instance.new("Frame")
+		Library.NotifyLayout.AnchorPoint = Vector2.new(1, 1)
+		Library.NotifyLayout.BackgroundTransparency = 1
+		Library.NotifyLayout.Position = UDim2.new(1, -20, 1, -20)
+		Library.NotifyLayout.Size = UDim2.new(0, 280, 1, 0)
+		Library.NotifyLayout.Parent = Library.NotifyGui
+	end
+
+	local existing = 0
+	for _, child in ipairs(Library.NotifyLayout:GetChildren()) do
+		if child:IsA("Frame") then existing = existing + 1 end
+	end
+	local yOffset = existing * 85
 
 	local Frame = Instance.new("Frame")
-	Frame.Size = UDim2.new(0, 260, 0, 80)
-	Frame.Position = UDim2.new(1, -270, 1, -90)
+	Frame.Size = UDim2.new(1, 0, 0, 75)
+	Frame.Position = UDim2.new(0, 0, 1, -yOffset - 75)
 	Frame.AnchorPoint = Vector2.new(0, 1)
 	Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 	Frame.BorderSizePixel = 0
-	Frame.Parent = NotifyGui
+	Frame.Parent = Library.NotifyLayout
 	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
-	Instance.new("UIStroke", Frame).Color = Color3.fromRGB(100, 100, 100)
+	Instance.new("UIStroke", Frame).Color = Color3.fromRGB(255, 255, 255)
 
 	local TitleLabel = Instance.new("TextLabel")
-	TitleLabel.Size = UDim2.new(1, -10, 0, 20)
+	TitleLabel.Size = UDim2.new(1, -30, 0, 20)
 	TitleLabel.Position = UDim2.new(0, 10, 0, 10)
 	TitleLabel.BackgroundTransparency = 1
 	TitleLabel.Font = Enum.Font.GothamBold
@@ -121,8 +140,22 @@ function Library:Notification(Title, Text, Duration)
 	TitleLabel.TextSize = 14
 	TitleLabel.Parent = Frame
 
+	local CloseBtn = Instance.new("TextButton")
+	CloseBtn.BackgroundTransparency = 1
+	CloseBtn.Position = UDim2.new(1, -25, 0, 10)
+	CloseBtn.Size = UDim2.new(0, 20, 0, 20)
+	CloseBtn.Text = "✕"
+	CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	CloseBtn.TextSize = 14
+	CloseBtn.Parent = Frame
+	CloseBtn.Activated:Connect(function()
+		Frame.Visible = false
+		Library:TweenInstance(Frame, 0.3, "Position", UDim2.new(0, 400, 1, Frame.Position.Y.Offset))
+		task.delay(0.3, Frame.Destroy, Frame)
+	end)
+
 	local TextLabel = Instance.new("TextLabel")
-	TextLabel.Size = UDim2.new(1, -10, 0, 30)
+	TextLabel.Size = UDim2.new(1, -20, 0, 30)
 	TextLabel.Position = UDim2.new(0, 10, 0, 35)
 	TextLabel.BackgroundTransparency = 1
 	TextLabel.Font = Enum.Font.Gotham
@@ -132,10 +165,14 @@ function Library:Notification(Title, Text, Duration)
 	TextLabel.TextWrapped = true
 	TextLabel.Parent = Frame
 
-	Library:TweenInstance(Frame, 0.4, "Position", UDim2.new(1, -270, 1, -10))
+	Frame.Position = UDim2.new(0, 400, 1, Frame.Position.Y.Offset)
+	Library:TweenInstance(Frame, 0.4, "Position", UDim2.new(0, 0, 1, Frame.Position.Y.Offset))
+
 	task.delay(Duration, function()
-		Library:TweenInstance(Frame, 0.4, "Position", UDim2.new(1, -270, 1, -90))
-		task.delay(0.4, NotifyGui.Destroy, NotifyGui)
+		if Frame and Frame.Parent then
+			Library:TweenInstance(Frame, 0.4, "Position", UDim2.new(0, 400, 1, Frame.Position.Y.Offset))
+			task.delay(0.4, Frame.Destroy, Frame)
+		end
 	end)
 end
 
@@ -149,7 +186,7 @@ function Library:NewWindow(ConfigWindow)
 	ConfigWindow = self:MakeConfig({
 		Title = "King Rua Hub",
 		Description = "By _ng.shinichi",
-		ThemeColor = Color3.fromRGB(255, 255, 255),   -- cor dos contornos
+		ThemeColor = Color3.fromRGB(255, 255, 255),
 		ToggleKey = Enum.KeyCode.RightShift,
 	}, ConfigWindow or {})
 
@@ -162,7 +199,7 @@ function Library:NewWindow(ConfigWindow)
 	KingRuaUI_Premium.Parent = CoreGui
 	KingRuaUI_Premium.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-	-- Main (centralizado)
+	-- Main
 	local Main = Instance.new("Frame")
 	Main.BackgroundColor3 = Color3.fromRGB(9,9,9)
 	Main.BackgroundTransparency = 0.07
@@ -260,7 +297,7 @@ function Library:NewWindow(ConfigWindow)
 		Main.Visible = false
 	end)
 
-	-- Maximize/Restore (apenas estica, sem mover)
+	-- Maximize/Restore
 	local Large = Instance.new("TextButton")
 	Large.BackgroundTransparency = 1
 	Large.Size = UDim2.new(0,30,0,30)
@@ -311,7 +348,7 @@ function Library:NewWindow(ConfigWindow)
 		if KeybindConnection then KeybindConnection:Disconnect() end
 	end)
 
-	-- TabFrame (barra lateral das abas)
+	-- TabFrame
 	local TabFrame = Instance.new("Frame")
 	TabFrame.BackgroundTransparency = 1
 	TabFrame.Position = UDim2.new(0,0,0,50)
@@ -348,7 +385,6 @@ function Library:NewWindow(ConfigWindow)
 	SearchBox.TextXAlignment = Enum.TextXAlignment.Left
 	SearchBox.Parent = SearchFrame
 
-	-- Lista de abas (ScrollingFrame na lateral)
 	local ScrollingTab = Instance.new("ScrollingFrame")
 	ScrollingTab.BackgroundTransparency = 1
 	ScrollingTab.Position = UDim2.new(0,0,0,50)
@@ -383,7 +419,7 @@ function Library:NewWindow(ConfigWindow)
 	LayoutName.Size = UDim2.new(1,0,0,40)
 	LayoutName.Parent = LayoutFrame
 
-	local TextLabel = Instance.new("TextLabel")  -- nome da aba atual
+	local TextLabel = Instance.new("TextLabel")
 	TextLabel.BackgroundTransparency = 1
 	TextLabel.Position = UDim2.new(0,10,0,0)
 	TextLabel.Size = UDim2.new(1,-10,1,0)
@@ -394,18 +430,15 @@ function Library:NewWindow(ConfigWindow)
 	TextLabel.TextXAlignment = Enum.TextXAlignment.Left
 	TextLabel.Parent = LayoutName
 
-	-- Contêiner dos conteúdos das abas
 	local TabContentContainer = Instance.new("Frame")
 	TabContentContainer.BackgroundTransparency = 1
 	TabContentContainer.Size = UDim2.new(1,0,1,-40)
 	TabContentContainer.Position = UDim2.new(0,0,0,40)
 	TabContentContainer.Parent = LayoutFrame
 
-	-- Tabela para guardar ScrollingFrames das abas
 	local TabContents = {}
 	local ActiveTabContent = nil
 
-	-- DropdownZone (para dropdowns e color picker modal)
 	local DropdownZone = Instance.new("Frame")
 	DropdownZone.Name = "DropdownZone"
 	DropdownZone.BackgroundColor3 = Color3.new(0,0,0)
@@ -417,9 +450,6 @@ function Library:NewWindow(ConfigWindow)
 
 	Library:MakeDraggable(Top, Main)
 
-	-- ========================
-	-- Funções de aba e elementos
-	-- ========================
 	local Window = {}
 
 	local function SwitchTab(TabButton)
@@ -450,7 +480,7 @@ function Library:NewWindow(ConfigWindow)
 			TabName = TabConfig
 			TabIcon = nil
 		else
-			TabConfig = Library:MakeConfig({Name = "Tab", Icon = ""}, TabConfig)  -- CORRIGIDO: Library:MakeConfig
+			TabConfig = Library:MakeConfig({Name = "Tab", Icon = ""}, TabConfig)
 			TabName = TabConfig.Name
 			TabIcon = TabConfig.Icon
 		end
@@ -460,6 +490,11 @@ function Library:NewWindow(ConfigWindow)
 		TabButton.Size = UDim2.new(1,0,0,30)
 		TabButton.Parent = ScrollingTab
 		Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0,6)
+		local tabStroke = Instance.new("UIStroke")
+		tabStroke.Color = ThemeColor
+		tabStroke.Thickness = 1.2
+		tabStroke.Transparency = 0.7
+		tabStroke.Parent = TabButton
 
 		local IconLabel = nil
 		if TabIcon and TabIcon ~= "" then
@@ -522,17 +557,16 @@ function Library:NewWindow(ConfigWindow)
 			SwitchTab(TabButton)
 		end)
 
-		-- Objeto de métodos da aba
 		local TabMethods = {}
 
 		function TabMethods:AddSeparator(Text)
 			local Sep = Instance.new("TextLabel")
 			Sep.BackgroundTransparency = 1
-			Sep.Size = UDim2.new(1,0,0,28)
-			Sep.Font = Enum.Font.GothamBlack
+			Sep.Size = UDim2.new(1,0,0,22)
+			Sep.Font = Enum.Font.GothamBold
 			Sep.Text = Text
-			Sep.TextColor3 = Color3.fromRGB(255,255,255)   -- branco puro
-			Sep.TextSize = 16
+			Sep.TextColor3 = Color3.fromRGB(255,255,255)
+			Sep.TextSize = 13
 			Sep.TextXAlignment = Enum.TextXAlignment.Left
 			Sep.Parent = ContentScroll
 		end
@@ -546,7 +580,7 @@ function Library:NewWindow(ConfigWindow)
 			return s
 		end
 
-		-- ===== Elementos (todos corrigidos para usar Library:MakeConfig) =====
+		-- ===== Elementos =====
 		function TabMethods:AddToggle(Config)
 			Config = Library:MakeConfig({
 				Title = "Toggle", Description = "", Default = false,
@@ -1248,12 +1282,13 @@ function Library:NewWindow(ConfigWindow)
 			}
 		end
 
-		-- ColorPicker compacto com modal
+		-- ColorPicker corrigido
 		function TabMethods:AddColorPicker(Config)
 			Config = Library:MakeConfig({
 				Title = "Color Picker", Description = "", Default = Color3.fromRGB(255,255,255),
 				Flag = nil, Callback = function() end
 			}, Config or {})
+
 			local ColorFrame = Instance.new("Frame")
 			ColorFrame.BackgroundColor3 = Color3.new(1,1,1)
 			ColorFrame.BackgroundTransparency = 0.95
@@ -1298,7 +1333,7 @@ function Library:NewWindow(ConfigWindow)
 			local ColorModal = Instance.new("Frame")
 			ColorModal.BackgroundColor3 = Color3.fromRGB(15,15,15)
 			ColorModal.BorderSizePixel = 0
-			ColorModal.Size = UDim2.new(0,250,0,180)
+			ColorModal.Size = UDim2.new(0,260,0,200)
 			ColorModal.Position = UDim2.new(0.5,0,0.5,0)
 			ColorModal.AnchorPoint = Vector2.new(0.5,0.5)
 			ColorModal.Visible = false
@@ -1309,7 +1344,7 @@ function Library:NewWindow(ConfigWindow)
 			local ModalTitle = Instance.new("TextLabel")
 			ModalTitle.BackgroundTransparency = 1
 			ModalTitle.Size = UDim2.new(1,-20,0,30)
-			ModalTitle.Position = UDim2.new(0,10,0,5)
+			ModalTitle.Position = UDim2.new(0,15,0,8)
 			ModalTitle.Font = Enum.Font.GothamBold
 			ModalTitle.Text = Config.Title or "Color Picker"
 			ModalTitle.TextColor3 = Color3.fromRGB(255,255,255)
@@ -1319,62 +1354,63 @@ function Library:NewWindow(ConfigWindow)
 
 			local CloseModal = Instance.new("TextButton")
 			CloseModal.BackgroundTransparency = 1
-			CloseModal.Position = UDim2.new(1,-30,0,5)
+			CloseModal.Position = UDim2.new(1,-35,0,8)
 			CloseModal.Size = UDim2.new(0,25,0,25)
 			CloseModal.Text = "✕"
 			CloseModal.TextColor3 = Color3.fromRGB(255,255,255)
 			CloseModal.TextSize = 16
 			CloseModal.Parent = ColorModal
 
-			-- Sliders RGB no modal
+			-- Sliders RGB corrigidos
 			local currentColor = {R = Config.Default.R*255, G = Config.Default.G*255, B = Config.Default.B*255}
+			local draggingSlider = nil
+
 			local function updatePreview()
 				Preview.BackgroundColor3 = Color3.fromRGB(currentColor.R, currentColor.G, currentColor.B)
 			end
 
-			local function makeSlider(letter, y)
+			local function makeSlider(letter, yPos)
 				local label = Instance.new("TextLabel")
 				label.BackgroundTransparency = 1
-				label.Position = UDim2.new(0,15,0,y)
-				label.Size = UDim2.new(0,20,0,20)
+				label.Position = UDim2.new(0,15,0,yPos)
+				label.Size = UDim2.new(0,25,0,22)
 				label.Font = Enum.Font.GothamBold
 				label.Text = letter
 				label.TextColor3 = Color3.fromRGB(255,255,255)
-				label.TextSize = 12
+				label.TextSize = 13
 				label.Parent = ColorModal
 
 				local bar = Instance.new("Frame")
 				bar.BackgroundColor3 = Color3.fromRGB(40,40,40)
 				bar.BorderSizePixel = 0
-				bar.Position = UDim2.new(0,40,0,y+2)
-				bar.Size = UDim2.new(1,-100,0,6)
+				bar.Position = UDim2.new(0,45,0,yPos+2)
+				bar.Size = UDim2.new(1,-115,0,8)
 				bar.Parent = ColorModal
 				Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
 
 				local fill = Instance.new("Frame")
-				fill.BackgroundColor3 = ThemeColor
+				fill.BackgroundColor3 = Color3.fromRGB(255,255,255)
 				fill.BorderSizePixel = 0
 				fill.Size = UDim2.new(0.5,0,1,0)
 				fill.Parent = bar
 				Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
 
 				local valBox = Instance.new("TextBox")
-				valBox.AnchorPoint = Vector2.new(0,0.5)
 				valBox.BackgroundColor3 = Color3.fromRGB(25,25,25)
 				valBox.BorderSizePixel = 0
-				valBox.Position = UDim2.new(1,-45,0.5,y)
-				valBox.Size = UDim2.new(0,35,0,20)
+				valBox.Position = UDim2.new(1,-55,0,yPos-2)
+				valBox.Size = UDim2.new(0,40,0,22)
 				valBox.Font = Enum.Font.GothamBold
 				valBox.Text = "0"
 				valBox.TextColor3 = Color3.fromRGB(255,255,255)
-				valBox.TextSize = 11
+				valBox.TextSize = 12
 				valBox.Parent = ColorModal
 				Instance.new("UICorner", valBox).CornerRadius = UDim.new(0,3)
 
-				local dragging = false
+				-- Arrasto independente
 				bar.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						dragging = true
+						draggingSlider = letter
 						local scale = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
 						local val = math.floor(scale*255)
 						currentColor[letter] = val
@@ -1385,10 +1421,13 @@ function Library:NewWindow(ConfigWindow)
 					end
 				end)
 				bar.InputEnded:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						draggingSlider = nil
+					end
 				end)
+
 				UserInputService.InputChanged:Connect(function(input)
-					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+					if draggingSlider == letter and input.UserInputType == Enum.UserInputType.MouseMovement then
 						local scale = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
 						local val = math.floor(scale*255)
 						currentColor[letter] = val
@@ -1398,6 +1437,7 @@ function Library:NewWindow(ConfigWindow)
 						pcall(Config.Callback, Color3.fromRGB(currentColor.R, currentColor.G, currentColor.B))
 					end
 				end)
+
 				valBox.FocusLost:Connect(function()
 					local num = tonumber(valBox.Text) or 0
 					num = math.clamp(math.floor(num), 0, 255)
@@ -1407,12 +1447,13 @@ function Library:NewWindow(ConfigWindow)
 					updatePreview()
 					pcall(Config.Callback, Color3.fromRGB(currentColor.R, currentColor.G, currentColor.B))
 				end)
+
 				return fill, valBox
 			end
 
-			local RFill, RBox = makeSlider("R", 35)
-			local GFill, GBox = makeSlider("G", 65)
-			local BFill, BBox = makeSlider("B", 95)
+			local RFill, RBox = makeSlider("R", 40)
+			local GFill, GBox = makeSlider("G", 75)
+			local BFill, BBox = makeSlider("B", 110)
 
 			OpenColorBtn.Activated:Connect(function()
 				for _, child in ipairs(DropdownZone:GetChildren()) do
