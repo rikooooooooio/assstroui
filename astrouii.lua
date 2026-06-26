@@ -1,5 +1,5 @@
 -- // =========================================
--- // King Rua Hub UI Library - Versão Corrigida
+-- // King Rua Hub UI Library - Versão Final
 -- // =========================================
 local Library = {}
 
@@ -50,14 +50,11 @@ end
 
 function Library:MakeDraggable(TopBar, Object)
 	local Dragging, DragStart, StartPos
-	local InputBeganConn, InputChangedConn, InputEndedConn
-
 	TopBar.InputBegan:Connect(function(Input)
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
 			Dragging = true
 			DragStart = Input.Position
 			StartPos = Object.Position
-
 			Input.Changed:Connect(function(Prop)
 				if Prop == "UserInputState" and Input.UserInputState == Enum.UserInputState.End then
 					Dragging = false
@@ -65,7 +62,6 @@ function Library:MakeDraggable(TopBar, Object)
 			end)
 		end
 	end)
-
 	UserInputService.InputChanged:Connect(function(Input)
 		if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
 			local Delta = Input.Position - DragStart
@@ -145,7 +141,6 @@ function Library:Notification(Title, Text, Duration)
 	TextLabel.TextWrapped = true
 	TextLabel.Parent = Frame
 
-	Frame.AnchorPoint = Vector2.new(0, 1)
 	Library:TweenInstance(Frame, 0.4, "Position", UDim2.new(1, -270, 1, -10))
 	task.delay(Duration, function()
 		Library:TweenInstance(Frame, 0.4, "Position", UDim2.new(1, -270, 1, -90))
@@ -168,46 +163,27 @@ function Library:NewWindow(ConfigWindow)
 
 	local ThemeColor = ConfigWindow.ThemeColor
 
-	-- Variáveis
+	-- Variáveis de estado
 	local WindowOpen = true
 	local KeybindConnection
 
 	-- ===================================
-	-- Criação da GUI principal
+	-- Criação da GUI principal (sem sombra)
 	-- ===================================
 	local KingRuaUI_Premium = Instance.new("ScreenGui")
 	KingRuaUI_Premium.Name = "KingRuaUI_Premium"
 	KingRuaUI_Premium.Parent = CoreGui
 	KingRuaUI_Premium.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-	local DropShadowHolder = Instance.new("Frame")
-	DropShadowHolder.AnchorPoint = Vector2.new(0.5, 0.5)
-	DropShadowHolder.BackgroundTransparency = 1
-	DropShadowHolder.Size = UDim2.new(0, 555, 0, 350)
-	DropShadowHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
-	DropShadowHolder.Name = "DropShadowHolder"
-	DropShadowHolder.Parent = KingRuaUI_Premium
-
-	local DropShadow = Instance.new("ImageLabel")
-	DropShadow.BackgroundTransparency = 1
-	DropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
-	DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-	DropShadow.Size = UDim2.new(1, 47, 1, 47)
-	DropShadow.Image = "rbxassetid://6015897843"
-	DropShadow.ImageColor3 = Color3.new(0,0,0)
-	DropShadow.ImageTransparency = 0.5
-	DropShadow.ScaleType = Enum.ScaleType.Slice
-	DropShadow.SliceCenter = Rect.new(49,49,450,450)
-	DropShadow.Parent = DropShadowHolder
-
+	-- Main é o contêiner principal, diretamente no ScreenGui
 	local Main = Instance.new("Frame")
 	Main.BackgroundColor3 = Color3.fromRGB(9,9,9)
 	Main.BackgroundTransparency = 0.07
 	Main.BorderSizePixel = 0
-	Main.Size = UDim2.new(1, -47, 1, -47)
-	Main.Position = UDim2.new(0,0,0,0)
-	Main.Parent = DropShadow
-	Main.AnchorPoint = Vector2.new(0,0)
+	Main.Size = UDim2.new(0, 555, 0, 350)          -- tamanho inicial
+	Main.Position = UDim2.new(0.5, -277, 0.5, -175) -- centralizado
+	Main.AnchorPoint = Vector2.new(0.5, 0.5)
+	Main.Parent = KingRuaUI_Premium
 	Instance.new("UICorner", Main)
 
 	local UIStroke = Instance.new("UIStroke")
@@ -222,14 +198,6 @@ function Library:NewWindow(ConfigWindow)
 	Top.Size = UDim2.new(1,0,0,50)
 	Top.Name = "Top"
 	Top.Parent = Main
-
-	local Line = Instance.new("Frame")
-	Line.BackgroundColor3 = ThemeColor
-	Line.BackgroundTransparency = 0.5
-	Line.BorderSizePixel = 0
-	Line.Position = UDim2.new(0,0,1,-1)
-	Line.Size = UDim2.new(1,0,0,1)
-	Line.Parent = Top
 
 	local Left = Instance.new("Folder")
 	Left.Name = "Left"
@@ -303,7 +271,7 @@ function Library:NewWindow(ConfigWindow)
 	IconMin.Parent = Minize
 	Minize.Activated:Connect(function()
 		WindowOpen = false
-		KingRuaUI_Premium.Enabled = false
+		Main.Visible = false
 	end)
 
 	-- Maximize/Restore
@@ -323,19 +291,21 @@ function Library:NewWindow(ConfigWindow)
 	IconMax.Parent = Large
 
 	local IsMaximized = false
-	local OldSize = DropShadowHolder.Size
-	local OldPos = DropShadowHolder.Position
+	local OldSize = Main.Size
+	local OldPos = Main.Position
 	Large.Activated:Connect(function()
 		if IsMaximized then
-			Library:TweenInstance(DropShadowHolder, 0.3, "Size", OldSize)
-			Library:TweenInstance(DropShadowHolder, 0.3, "Position", OldPos)
+			-- Restaurar
+			Library:TweenInstance(Main, 0.3, "Size", OldSize)
+			Library:TweenInstance(Main, 0.3, "Position", OldPos)
 			IconMax.ImageRectOffset = Vector2.new(580,194)
 			IsMaximized = false
 		else
-			OldSize = DropShadowHolder.Size
-			OldPos = DropShadowHolder.Position
-			Library:TweenInstance(DropShadowHolder, 0.3, "Size", UDim2.new(1,0,1,0))
-			Library:TweenInstance(DropShadowHolder, 0.3, "Position", UDim2.new(0,0,0,0))
+			-- Maximizar
+			OldSize = Main.Size
+			OldPos = Main.Position
+			Library:TweenInstance(Main, 0.3, "Size", UDim2.new(1,0,1,0))
+			Library:TweenInstance(Main, 0.3, "Position", UDim2.new(0,0,0,0))
 			IconMax.ImageRectOffset = Vector2.new(580,98)
 			IsMaximized = true
 		end
@@ -367,14 +337,6 @@ function Library:NewWindow(ConfigWindow)
 	TabFrame.Position = UDim2.new(0,0,0,50)
 	TabFrame.Size = UDim2.new(0,144,1,-50)
 	TabFrame.Parent = Main
-
-	local Line_2 = Instance.new("Frame")
-	Line_2.BackgroundColor3 = ThemeColor
-	Line_2.BackgroundTransparency = 0.5
-	Line_2.BorderSizePixel = 0
-	Line_2.Position = UDim2.new(1,-1,0,0)
-	Line_2.Size = UDim2.new(0,1,1,0)
-	Line_2.Parent = TabFrame
 
 	-- Search
 	local SearchFrame = Instance.new("Frame")
@@ -427,7 +389,7 @@ function Library:NewWindow(ConfigWindow)
 	UIPadding_2.PaddingTop = UDim.new(0,3)
 	UIPadding_2.Parent = ScrollingTab
 
-	self:UpdateScrolling(ScrollingTab, UIListLayout_2)
+	Library:UpdateScrolling(ScrollingTab, UIListLayout_2)
 
 	-- Layout
 	local LayoutFrame = Instance.new("Frame")
@@ -469,7 +431,7 @@ function Library:NewWindow(ConfigWindow)
 	UIPageLayout.TweenTime = 0.3
 	UIPageLayout.Parent = LayoutList
 
-	-- DropdownZone (apenas dropdowns, diálogo separado)
+	-- DropdownZone (apenas dropdowns)
 	local DropdownZone = Instance.new("Frame")
 	DropdownZone.Name = "DropdownZone"
 	DropdownZone.BackgroundColor3 = Color3.new(0,0,0)
@@ -479,18 +441,8 @@ function Library:NewWindow(ConfigWindow)
 	DropdownZone.Visible = false
 	DropdownZone.Parent = Main
 
-	-- Confirm Dialog (separado)
-	local ConfirmDialog = Instance.new("Frame")
-	ConfirmDialog.Name = "ConfirmDialog"
-	ConfirmDialog.BackgroundColor3 = Color3.new(0,0,0)
-	ConfirmDialog.BackgroundTransparency = 1
-	ConfirmDialog.BorderSizePixel = 0
-	ConfirmDialog.Size = UDim2.new(1,0,1,0)
-	ConfirmDialog.Visible = false
-	ConfirmDialog.Parent = Main
-
-	-- Drag
-	self:MakeDraggable(Top, DropShadowHolder)
+	-- Drag (mover o Main ao arrastar o Top)
+	Library:MakeDraggable(Top, Main)
 
 	-- ===================================
 	-- Componentes (Tabs, Seções, Elementos)
@@ -552,7 +504,7 @@ function Library:NewWindow(ConfigWindow)
 		UIListLayout_3.Padding = UDim.new(0,10)
 		UIListLayout_3.Parent = Layout
 
-		self:UpdateScrolling(Layout, UIListLayout_3)
+		Library:UpdateScrolling(Layout, UIListLayout_3)
 
 		-- Ativação da primeira tab
 		if AllLayouts == 0 then
@@ -611,26 +563,6 @@ function Library:NewWindow(ConfigWindow)
 			Title.TextColor3 = Color3.fromRGB(255,255,255)
 			Title.TextSize = 14
 			Title.Parent = NameSection
-
-			local Line_3 = Instance.new("Frame")
-			Line_3.BackgroundColor3 = Color3.new(1,1,1)
-			Line_3.BorderSizePixel = 0
-			Line_3.Position = UDim2.new(0,0,1,-2)
-			Line_3.Size = UDim2.new(1,0,0,2)
-			Line_3.Parent = NameSection
-
-			local UIGradient = Instance.new("UIGradient")
-			UIGradient.Color = ColorSequence.new{
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(24,24,25)),
-				ColorSequenceKeypoint.new(0.52, ThemeColor),
-				ColorSequenceKeypoint.new(1, Color3.fromRGB(24,24,25))
-			}
-			UIGradient.Transparency = NumberSequence.new{
-				NumberSequenceKeypoint.new(0, 0.53),
-				NumberSequenceKeypoint.new(0.51, 0),
-				NumberSequenceKeypoint.new(1, 0.51)
-			}
-			UIGradient.Parent = Line_3
 
 			local SectionList = Instance.new("Frame")
 			SectionList.BackgroundTransparency = 1
@@ -940,7 +872,7 @@ function Library:NewWindow(ConfigWindow)
 				return InputFunc
 			end
 
-			-- // Dropdown
+			-- // Dropdown (com suporte Multi)
 			function SectionFunc:AddDropdown(Config)
 				Config = Library:MakeConfig({
 					Title = "Dropdown",
@@ -1019,7 +951,7 @@ function Library:NewWindow(ConfigWindow)
 
 				Library:UpdateContent(Content, TitleLabel, Dropdown)
 
-				-- Lista do Dropdown (dentro de DropdownZone)
+				-- Lista do Dropdown
 				local DropdownList = Instance.new("Frame")
 				DropdownList.BackgroundColor3 = Color3.fromRGB(18,18,18)
 				DropdownList.BorderSizePixel = 0
@@ -1114,7 +1046,7 @@ function Library:NewWindow(ConfigWindow)
 				UIPadding_5.PaddingTop = UDim.new(0,7)
 				UIPadding_5.Parent = RealList
 
-				self:UpdateScrolling(RealList, UIListLayout_5)
+				Library:UpdateScrolling(RealList, UIListLayout_5)
 
 				-- Filtro interno do dropdown
 				SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
@@ -1219,7 +1151,6 @@ function Library:NewWindow(ConfigWindow)
 
 				-- Abrir/Fechar dropdown
 				DropClick.Activated:Connect(function()
-					-- Fecha todos os outros dropdowns abertos
 					for _, child in ipairs(DropdownZone:GetChildren()) do
 						if child:IsA("Frame") and child ~= DropdownList then
 							child.Visible = false
@@ -1322,7 +1253,7 @@ function Library:NewWindow(ConfigWindow)
 				Instance.new("UICorner", SliderDraggable).CornerRadius = UDim.new(1,0)
 
 				local Circle = Instance.new("Frame")
-				Circle.AnchorPoint = Vector2.new(0.5,0.5)  -- CORRIGIDO
+				Circle.AnchorPoint = Vector2.new(0.5,0.5)
 				Circle.BackgroundColor3 = Color3.fromRGB(255,255,255)
 				Circle.BorderSizePixel = 0
 				Circle.Position = UDim2.new(1,0,0.5,0)
@@ -1414,7 +1345,6 @@ function Library:NewWindow(ConfigWindow)
 				Preview.Parent = ColorFrame
 				Instance.new("UICorner", Preview).CornerRadius = UDim.new(0,4)
 
-				-- Sliders RGB
 				local function CreateColorSlider(Text, ColorProperty, YPos)
 					local Label = Instance.new("TextLabel")
 					Label.BackgroundTransparency = 1
@@ -1441,13 +1371,6 @@ function Library:NewWindow(ConfigWindow)
 					Fill2.Parent = SliderFrame2
 					Instance.new("UICorner", Fill2).CornerRadius = UDim.new(1,0)
 
-					SliderFrame2.InputBegan:Connect(function(Input)
-						if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging2 = true end
-					end)
-					SliderFrame2.InputEnded:Connect(function(Input)
-						if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging2 = false end
-					end)
-
 					return Fill2, SliderFrame2
 				end
 
@@ -1458,7 +1381,6 @@ function Library:NewWindow(ConfigWindow)
 				local CurrentColor = Config.Default
 				local Dragging2 = false
 
-				-- Atualiza cor
 				local function UpdateColorFromSlider(SliderFrame, Component)
 					local Scale = math.clamp((UserInputService:GetMouseLocation().X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
 					local Value = math.floor(Scale * 255)
@@ -1472,7 +1394,6 @@ function Library:NewWindow(ConfigWindow)
 						Library.Flags[Config.Flag] = { Value = CurrentColor, Set = function(v) CurrentColor = v; Preview.BackgroundColor3 = v end, Get = function() return CurrentColor end }
 						Library:SaveSettings()
 					end
-					-- Atualiza fills
 					RFill.Size = UDim2.new(r/255,0,1,0)
 					GFill.Size = UDim2.new(g/255,0,1,0)
 					BFill.Size = UDim2.new(b/255,0,1,0)
@@ -1480,12 +1401,18 @@ function Library:NewWindow(ConfigWindow)
 
 				UserInputService.InputChanged:Connect(function(Input)
 					if Dragging2 and Input.UserInputType == Enum.UserInputType.MouseMovement then
-						-- Detecta qual slider está sendo usado (aproximado)
 						UpdateColorFromSlider(RSlider, "R")
 						UpdateColorFromSlider(GSlider, "G")
 						UpdateColorFromSlider(BSlider, "B")
 					end
 				end)
+
+				RSlider.InputBegan:Connect(function(Input) if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging2 = true end end)
+				RSlider.InputEnded:Connect(function(Input) if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging2 = false end end)
+				GSlider.InputBegan:Connect(function(Input) if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging2 = true end end)
+				GSlider.InputEnded:Connect(function(Input) if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging2 = false end end)
+				BSlider.InputBegan:Connect(function(Input) if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging2 = true end end)
+				BSlider.InputEnded:Connect(function(Input) if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging2 = false end end)
 
 				-- Inicial
 				RFill.Size = UDim2.new(Config.Default.R/255,0,1,0)
@@ -1633,23 +1560,23 @@ function Library:NewWindow(ConfigWindow)
 		return TabFunc
 	end
 
-	-- Botão flutuante externo (sempre visível)
+	-- Botão flutuante externo (canto inferior esquerdo) que minimiza/restaura
 	local FloatingButton = Instance.new("ImageButton")
 	FloatingButton.BackgroundColor3 = Color3.fromRGB(255,255,255)
 	FloatingButton.BorderSizePixel = 0
 	FloatingButton.Size = UDim2.new(0,50,0,50)
-	FloatingButton.Position = UDim2.new(0.5, -25, 0.5, -25)
+	FloatingButton.Position = UDim2.new(0, 20, 1, -70)  -- canto inferior esquerdo
 	FloatingButton.Image = "rbxassetid://124762714875426"
 	FloatingButton.Visible = true
 	FloatingButton.Parent = KingRuaUI_Premium
 	Instance.new("UICorner", FloatingButton).CornerRadius = UDim.new(1,0)
 	Instance.new("UIStroke", FloatingButton).Color = ThemeColor
 
-	self:MakeDraggable(FloatingButton, FloatingButton)
+	Library:MakeDraggable(FloatingButton, FloatingButton)
 
 	FloatingButton.MouseButton1Click:Connect(function()
 		WindowOpen = not WindowOpen
-		KingRuaUI_Premium.Enabled = WindowOpen
+		Main.Visible = WindowOpen
 	end)
 
 	-- Keybind global
@@ -1657,7 +1584,7 @@ function Library:NewWindow(ConfigWindow)
 		if GameProcessed then return end
 		if Input.KeyCode == ConfigWindow.ToggleKey then
 			WindowOpen = not WindowOpen
-			KingRuaUI_Premium.Enabled = WindowOpen
+			Main.Visible = WindowOpen
 		end
 	end)
 
